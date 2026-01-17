@@ -1,14 +1,19 @@
 export async function generateUniversalCode(prompt: string) {
-  // ہم یہاں ایک عوامی اور مفت API استعمال کر رہے ہیں
-  const response = await fetch("https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta", {
-    headers: { "Content-Type": "application/json" },
-    method: "POST",
-    body: JSON.stringify({
-      inputs: `Create a professional web app code for: ${prompt}. Return only HTML, CSS and JS code.`,
-    }),
-  });
-  
-  const result = await response.json();
-  // یہ مفت ماڈل آپ کو براہ راست ٹیکسٹ فراہم کرے گا
-  return result[0]?.generated_text || "معذرت، ابھی سرور مصروف ہے۔ دوبارہ کوشش کریں۔";
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Write full HTML, CSS, and JS code for: ${prompt}. Return only the code without any explanation.` }] }]
+      }),
+    });
+
+    const result = await response.json();
+    // گوگل جیمنی کا جواب حاصل کرنا
+    return result.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.error(error);
+    return "معذرت، گوگل سرور سے رابطہ نہیں ہو سکا یا چابی غلط ہے۔";
+  }
 }
