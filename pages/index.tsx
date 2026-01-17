@@ -2,11 +2,17 @@ import { useState } from 'react';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
-  const [code, setCode] = useState('');
+  const [messages, setMessages] = useState<{role: string, text: string}[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const generateApp = async () => {
+  const sendMessage = async () => {
+    if (!prompt) return;
+    
+    const newMessages = [...messages, { role: 'user', text: prompt }];
+    setMessages(newMessages);
+    setPrompt('');
     setLoading(true);
+
     try {
       const res = await fetch('/api/create-project', {
         method: 'POST',
@@ -14,42 +20,50 @@ export default function Home() {
         body: JSON.stringify({ prompt }),
       });
       const data = await res.json();
-      setCode(data.code);
+      setMessages([...newMessages, { role: 'ai', text: data.code }]);
     } catch (err) {
-      alert("کچھ غلط ہو گیا!");
+      alert("رابطہ منقطع ہو گیا!");
     }
     setLoading(false);
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'system-ui', textAlign: 'right', direction: 'rtl' }}>
-      <h1>آسان مفت AI بلڈر 🚀</h1>
-      <textarea 
-        placeholder="مثلاً: ایک کیلکولیٹر بنا دیں..."
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        style={{ width: '100%', height: '100px', padding: '10px', borderRadius: '8px' }}
-      />
-      <button 
-        onClick={generateApp} 
-        disabled={loading}
-        style={{ 
-          marginTop: '10px', padding: '15px 30px', 
-          backgroundColor: loading ? '#ccc' : '#0070f3', 
-          color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' 
-        }}
-      >
-        {loading ? 'انتظار کریں، AI کام کر رہا ہے...' : 'ایپ جنریٹ کریں'}
-      </button>
+    <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto', direction: 'rtl', fontFamily: 'sans-serif' }}>
+      <h1 style={{ textAlign: 'center' }}>AI چیٹ اور ایپ بلڈر 💬</h1>
+      
+      {/* چیٹ ونڈو */}
+      <div style={{ height: '400px', border: '1px solid #ddd', overflowY: 'scroll', padding: '10px', borderRadius: '10px', backgroundColor: '#f9f9f9' }}>
+        {messages.map((msg, i) => (
+          <div key={i} style={{ marginBottom: '15px', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
+            <div style={{ 
+              display: 'inline-block', padding: '10px', borderRadius: '10px', 
+              backgroundColor: msg.role === 'user' ? '#0070f3' : '#eee', 
+              color: msg.role === 'user' ? 'white' : 'black',
+              maxWidth: '80%', direction: msg.role === 'user' ? 'rtl' : 'ltr'
+            }}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+        {loading && <p style={{ textAlign: 'center' }}>AI سوچ رہا ہے...</p>}
+      </div>
 
-      {code && (
-        <div style={{ marginTop: '20px', textAlign: 'left', direction: 'ltr' }}>
-          <h3>تیار شدہ کوڈ:</h3>
-          <pre style={{ backgroundColor: '#f4f4f4', padding: '15px', overflow: 'auto', borderRadius: '8px' }}>
-            {code}
-          </pre>
-        </div>
-      )}
+      {/* ان پٹ ایریا */}
+      <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+        <input 
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="یہاں کچھ لکھیں..."
+          style={{ flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+        />
+        <button 
+          onClick={sendMessage} 
+          disabled={loading}
+          style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+        >
+          بھیجیں
+        </button>
+      </div>
     </div>
   );
 }
