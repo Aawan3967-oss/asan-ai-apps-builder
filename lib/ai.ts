@@ -1,20 +1,14 @@
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function generateUniversalCode(prompt: string) {
-  const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [
-      { 
-        role: "system", 
-        content: "You are a master web developer. Generate a complete, single-file HTML/CSS/JS solution for any app or website requested. Make it professional and responsive." 
-      },
-      { role: "user", content: `Create a full website/app for: ${prompt}` }
-    ],
+  // ہم یہاں ایک عوامی اور مفت API استعمال کر رہے ہیں
+  const response = await fetch("https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta", {
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+    body: JSON.stringify({
+      inputs: `Create a professional web app code for: ${prompt}. Return only HTML, CSS and JS code.`,
+    }),
   });
-
-  return response.choices[0].message.content;
+  
+  const result = await response.json();
+  // یہ مفت ماڈل آپ کو براہ راست ٹیکسٹ فراہم کرے گا
+  return result[0]?.generated_text || "معذرت، ابھی سرور مصروف ہے۔ دوبارہ کوشش کریں۔";
 }
