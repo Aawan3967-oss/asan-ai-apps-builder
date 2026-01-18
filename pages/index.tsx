@@ -6,15 +6,12 @@ export default function Home() {
   const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [language, setLanguage] = useState('ur'); // ڈیفالٹ اردو
+  const [language, setLanguage] = useState('ur');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // آٹومیٹک زبان کی تبدیلی کا سسٹم
   useEffect(() => {
     const userLang = navigator.language || 'ur';
-    if (userLang.startsWith('en')) setLanguage('en');
-    else if (userLang.startsWith('ar')) setLanguage('ar');
-    else setLanguage('ur');
+    setLanguage(userLang.startsWith('en') ? 'en' : 'ur');
   }, []);
 
   useEffect(() => {
@@ -23,8 +20,8 @@ export default function Home() {
 
   const sendMessage = async () => {
     if (!prompt.trim()) return;
-    const userMsg = { role: 'user', text: prompt };
-    setMessages((prev) => [...prev, userMsg]);
+    const newMsgs = [...messages, { role: 'user', text: prompt }];
+    setMessages(newMsgs);
     setPrompt('');
     setLoading(true);
 
@@ -35,73 +32,70 @@ export default function Home() {
         body: JSON.stringify({ prompt }),
       });
       const data = await response.json();
-      setMessages((prev) => [...prev, { role: 'ai', text: data.text }]);
+      setMessages([...newMsgs, { role: 'ai', text: data.text || "AI جواب نہیں دے سکا۔" }]);
     } catch (error) {
-      setMessages((prev) => [...prev, { role: 'ai', text: "کنکشن کا مسئلہ ہے۔ براہ کرم دوبارہ کوشش کریں۔" }]);
+      setMessages([...newMsgs, { role: 'ai', text: "رابطہ منقطع ہو گیا ہے۔" }]);
     } finally {
       setLoading(false);
     }
   };
 
-  // زبان کے حساب سے ٹیکسٹ
-  const t: any = {
-    ur: { newChat: "+ نئی چیٹ", upgrade: "اپ گریڈ پلان 💎", settings: "ترمیمات ⚙️", help: "مدد اور مددگار ❓", placeholder: "میسج لکھیں...", heading: "میں آپ کی کیا مدد کر سکتا ہوں؟" },
-    en: { newChat: "+ New Chat", upgrade: "Upgrade Plan 💎", settings: "Settings ⚙️", help: "Help & FAQ ❓", placeholder: "Message Asan AI...", heading: "How can I help you today?" }
+  const uiText: any = {
+    ur: { new: "+ نئی چیٹ", upgrade: "پلان اپ گریڈ کریں 💎", explore: "ایکسپلور کریں 🧭", history: "حالیہ گفتگو", help: "مدد حاصل کریں ❓", place: "میسج لکھیں...", head: "میں آپ کی کیا مدد کر سکتا ہوں؟" },
+    en: { new: "+ New Chat", upgrade: "Upgrade Plan 💎", explore: "Explore GPTs 🧭", history: "Recent History", help: "Help & FAQ ❓", place: "Message Asan AI...", head: "How can I help you today?" }
   };
-
-  const curr = t[language] || t['ur'];
+  const t = uiText[language] || uiText.ur;
 
   return (
-    <div style={{ 
-      display: 'flex', height: '100vh', backgroundColor: '#212121', color: '#fff', 
-      fontFamily: '"Noto Nastaliq Urdu", "Segoe UI", Tahoma, sans-serif', 
-      direction: language === 'ur' ? 'rtl' : 'ltr' 
-    }}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#212121', color: '#fff', direction: language === 'ur' ? 'rtl' : 'ltr', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
-      {/* 1. پروفیشنل سلائڈر (Sidebar) */}
-      <div style={{
-        width: isSidebarOpen ? '280px' : '0',
-        transition: 'all 0.3s ease',
-        backgroundColor: '#171717',
-        display: 'flex', flexDirection: 'column',
-        borderLeft: language === 'ur' ? '1px solid #333' : 'none',
-        borderRight: language === 'en' ? '1px solid #333' : 'none',
-        overflow: 'hidden'
-      }}>
+      {/* سائیڈ بار (سلائڈر) */}
+      <div style={{ width: isSidebarOpen ? '280px' : '0', transition: '0.3s', backgroundColor: '#171717', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderLeft: language === 'ur' ? '1px solid #333' : 'none' }}>
         <div style={{ padding: '15px', flex: 1 }}>
-          <button style={{ 
-            width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #424242', 
-            backgroundColor: 'transparent', color: '#fff', cursor: 'pointer', textAlign: 'right',
-            fontSize: '15px', fontWeight: 'bold', marginBottom: '20px'
-          }}>
-            {curr.newChat}
-          </button>
-          
-          <div style={{ color: '#b4b4b4', fontSize: '13px', padding: '10px' }}>حالیہ چیٹس (History)</div>
+          <button style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #424242', background: 'transparent', color: '#fff', cursor: 'pointer', marginBottom: '20px' }}>{t.new}</button>
+          <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>{t.history}</div>
+          <div style={{ padding: '8px', fontSize: '14px', cursor: 'pointer', borderRadius: '5px' }}>📌 ویب سائٹ کیسے بنائیں؟</div>
         </div>
-
-        {/* سلائیڈر کے اضافی بٹن */}
-        <div style={{ padding: '15px', backgroundColor: '#000' }}>
-          <Link href="/pricing" style={{ textDecoration: 'none' }}>
-            <div style={{ padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '5px', backgroundColor: '#2f2f2f' }}>
-              <span>💎</span> <span>{curr.upgrade}</span>
-            </div>
+        
+        <div style={{ padding: '15px', borderTop: '1px solid #333' }}>
+          <Link href="/pricing" style={{ textDecoration: 'none', color: '#fff' }}>
+            <div style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><span>💎</span> {t.upgrade}</div>
           </Link>
-          <div style={{ padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', color: '#d1d1d1' }}>
-            <span>⚙️</span> <span>{curr.settings}</span>
-          </div>
-          <div style={{ padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', color: '#d1d1d1' }}>
-            <span>❓</span> <span>{curr.help}</span>
-          </div>
+          <div style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><span>🧭</span> {t.explore}</div>
+          <div style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><span>❓</span> {t.help}</div>
         </div>
       </div>
 
-      {/* 2. مین چیٹ ایریا */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-        
-        {/* ٹاپ نیویگیشن */}
-        <div style={{ padding: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* مین چیٹ ایریا */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '15px', display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '20px', cursor: 'pointer' }}>☰</button>
+          <span style={{ fontWeight: 'bold' }}>Asan AI 🚀</span>
+        </div>
+
+        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto' }}>
+          {messages.length === 0 ? (
+            <div style={{ textAlign: 'center', marginTop: '20vh' }}><h2 style={{ fontSize: '2rem' }}>{t.head}</h2></div>
+          ) : (
+            messages.map((msg, i) => (
+              <div key={i} style={{ padding: '20px 15%', backgroundColor: msg.role === 'user' ? 'transparent' : '#2f2f2f', display: 'flex', gap: '20px' }}>
+                <div style={{ fontSize: '20px' }}>{msg.role === 'user' ? '👤' : '🤖'}</div>
+                <div style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div style={{ padding: '20px 15%' }}>
+          <div style={{ position: 'relative', maxWidth: '800px', margin: 'auto' }}>
+            <input value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendMessage()} placeholder={t.place} style={{ width: '100%', padding: '14px 20px', borderRadius: '15px', backgroundColor: '#2f2f2f', border: '1px solid #424242', color: '#fff', outline: 'none' }} />
+            <button onClick={sendMessage} style={{ position: 'absolute', [language === 'ur' ? 'left' : 'right']: '10px', top: '50%', transform: 'translateY(-50%)', backgroundColor: loading ? '#555' : '#fff', color: '#000', border: 'none', width: '30px', height: '30px', borderRadius: '8px', cursor: 'pointer' }}>{loading ? '...' : '↑'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}          <button onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '20px', cursor: 'pointer' }}>☰</button>
           <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#ececec' }}>Asan AI 🚀</div>
           <div style={{ width: '20px' }}></div>
         </div>
