@@ -5,101 +5,136 @@ export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // چیٹ کو خودکار طور پر نیچے سکرول کرنے کے لیے
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
   const sendMessage = async () => {
     if (!prompt.trim()) return;
-
     const userMsg = { role: 'user', text: prompt };
     setMessages((prev) => [...prev, userMsg]);
     setPrompt('');
     setLoading(true);
 
     try {
-      // ہم اب اپنے داخلی API روٹ کو کال کر رہے ہیں جو کہ زیادہ محفوظ ہے
       const response = await fetch('/api/chat', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
-
       const data = await response.json();
-      
-      if (response.ok) {
-        setMessages((prev) => [...prev, { role: 'ai', text: data.text }]);
-      } else {
-        throw new Error(data.text || "سرور کی طرف سے غلطی");
-      }
+      setMessages((prev) => [...prev, { role: 'ai', text: data.text }]);
     } catch (error) {
-      setMessages((prev) => [...prev, { role: 'ai', text: "خرابی: AI سے رابطہ نہیں ہو سکا۔ براہ کرم انٹرنیٹ یا API کی سیٹنگز چیک کریں۔" }]);
+      setMessages((prev) => [...prev, { role: 'ai', text: "Error: Could not connect to server." }]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '700px', margin: 'auto', direction: 'rtl', fontFamily: 'sans-serif', backgroundColor: '#f9f9f9', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#fff', color: '#ececec', fontFamily: 'sans-serif', direction: 'rtl' }}>
       
-      {/* ہیڈر اور پرائسنگ بٹن */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', backgroundColor: '#fff', padding: '10px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>AI چیٹ اور ایپ بلڈر 🚀</h2>
-        <Link href="/pricing">
-          <button style={{ padding: '8px 15px', backgroundColor: '#f39c12', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-            قیمتیں اور پلانس 💎
+      {/* 1. Sidebar (سلائیڈر) */}
+      <div style={{
+        width: isSidebarOpen ? '260px' : '0',
+        transition: 'width 0.3s ease',
+        backgroundColor: '#202123',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
+      }}>
+        <div style={{ padding: '10px', flex: 1 }}>
+          <button style={{ width: '100%', padding: '12px', border: '1px solid #4d4d4f', borderRadius: '5px', backgroundColor: 'transparent', color: '#fff', cursor: 'pointer', textAlign: 'right', marginBottom: '10px' }}>
+            + New Chat
           </button>
-        </Link>
-      </div>
-      
-      {/* چیٹ ڈسپلے ایریا */}
-      <div 
-        ref={scrollRef}
-        style={{ height: '450px', border: '1px solid #eee', overflowY: 'auto', padding: '15px', borderRadius: '15px', backgroundColor: '#fff', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)' }}
-      >
-        {messages.length === 0 && (
-          <p style={{ textAlign: 'center', color: '#999', marginTop: '150px' }}>آج میں آپ کی کیا مدد کر سکتا ہوں؟</p>
-        )}
-        {messages.map((msg, i) => (
-          <div key={i} style={{ marginBottom: '15px', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
-            <div style={{ 
-              display: 'inline-block', 
-              padding: '12px 16px', 
-              borderRadius: '15px', 
-              maxWidth: '85%',
-              lineHeight: '1.5',
-              backgroundColor: msg.role === 'user' ? '#0070f3' : '#f0f2f5', 
-              color: msg.role === 'user' ? 'white' : '#333',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
-            }}>
-              {msg.text}
-            </div>
+          
+          <div style={{ marginTop: '20px' }}>
+            <p style={{ color: '#666', fontSize: '12px', marginRight: '10px' }}>حالیہ چیٹس</p>
+            {/* یہاں پرانی چیٹس کی لسٹ آ سکتی ہے */}
           </div>
-        ))}
-        {loading && <p style={{ color: '#0070f3', fontSize: '12px' }}>AI جواب لکھ رہا ہے...</p>}
+        </div>
+
+        {/* سلائیڈر کے نیچے قیمت کا بٹن */}
+        <div style={{ padding: '15px', borderTop: '1px solid #4d4d4f' }}>
+          <Link href="/pricing" style={{ textDecoration: 'none' }}>
+            <div style={{ padding: '10px', borderRadius: '5px', backgroundColor: '#343541', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>💎</span>
+              <span>اپ گریڈ پلان (Pricing)</span>
+            </div>
+          </Link>
+          <div style={{ marginTop: '10px', padding: '10px', color: '#999', fontSize: '14px' }}>👤 میرا اکاؤنٹ</div>
+        </div>
       </div>
 
-      {/* ان پٹ ایریا */}
-      <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-        <input 
-          value={prompt} 
-          onChange={(e) => setPrompt(e.target.value)} 
-          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-          style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #ddd', outline: 'none' }} 
-          placeholder="یہاں اپنا سوال لکھیں..." 
-        />
-        <button 
-          onClick={sendMessage} 
-          disabled={loading}
-          style={{ padding: '12px 25px', backgroundColor: '#0070f3', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', opacity: loading ? 0.6 : 1 }}
-        >
-          {loading ? '...' : 'بھیجیں'}
-        </button>
+      {/* 2. Main Chat Area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#343541', position: 'relative' }}>
+        
+        {/* ٹاپ بار (مینیو بٹن کے ساتھ) */}
+        <div style={{ padding: '10px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #2d2d30' }}>
+          <button 
+            onClick={() => setSidebarOpen(!isSidebarOpen)}
+            style={{ background: 'none', border: 'none', color: '#fff', fontSize: '24px', cursor: 'pointer', marginLeft: '15px' }}
+          >
+            ☰
+          </button>
+          <h1 style={{ fontSize: '16px', margin: 0, color: '#d1d1d1' }}>Asan AI Builder</h1>
+        </div>
+
+        {/* میسجز ڈسپلے */}
+        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingBottom: '100px' }}>
+          {messages.length === 0 && (
+            <div style={{ textAlign: 'center', marginTop: '20vh', color: '#fff' }}>
+              <h2 style={{ fontSize: '2rem' }}>میں آپ کی کیا مدد کر سکتا ہوں؟</h2>
+            </div>
+          )}
+          {messages.map((msg, i) => (
+            <div key={i} style={{ 
+              padding: '25px', 
+              backgroundColor: msg.role === 'user' ? '#343541' : '#444654',
+              display: 'flex',
+              gap: '20px',
+              borderBottom: '1px solid #2d2d30'
+            }}>
+              <div style={{ minWidth: '30px', fontWeight: 'bold' }}>{msg.role === 'user' ? '👤' : '🤖'}</div>
+              <div style={{ fontSize: '16px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* ان پٹ باکس (فلوٹنگ) */}
+        <div style={{
+          position: 'absolute', bottom: '0', left: '0', right: '0',
+          padding: '20px', background: 'linear-gradient(transparent, #343541 50%)',
+          display: 'flex', justifyContent: 'center'
+        }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '700px' }}>
+            <input 
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Message Asan AI..."
+              style={{
+                width: '100%', padding: '14px 45px 14px 15px', borderRadius: '10px',
+                backgroundColor: '#40414f', border: 'none', color: '#fff',
+                boxShadow: '0 0 15px rgba(0,0,0,0.1)', outline: 'none'
+              }}
+            />
+            <button 
+              onClick={sendMessage}
+              style={{
+                position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+                background: loading ? '#666' : '#19c37d', color: '#fff', border: 'none',
+                padding: '5px 10px', borderRadius: '5px', cursor: 'pointer'
+              }}
+            >
+              {loading ? '...' : '↑'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
