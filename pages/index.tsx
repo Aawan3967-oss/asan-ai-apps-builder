@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Mic, Paperclip, Send, LogOut, Bot, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Mic, Paperclip, Send, LogOut, Bot, Sparkles, User } from 'lucide-react';
 
 export default function Home() {
   const { data: session } = useSession();
@@ -16,70 +16,92 @@ export default function Home() {
     setChat(newChat);
     setInput('');
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: newChat }),
-    });
-    const data = await res.json();
-    setChat([...newChat, { role: 'assistant', content: data.content }]);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newChat }),
+      });
+      const data = await res.json();
+      setChat([...newChat, { role: 'assistant', content: data.content || "معذرت، میں ابھی جواب نہیں دے سکتا۔" }]);
+    } catch (error) {
+      setChat([...newChat, { role: 'assistant', content: "API کنکشن کا مسئلہ ہے۔" }]);
+    }
   };
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6">
-        <Bot size={60} className="mb-4 text-blue-500 animate-pulse" />
-        <h1 className="text-4xl font-bold mb-6">Asan AI 🚀</h1>
-        <button onClick={() => signIn('google')} className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200 transition-all">
-          Sign in with Google
+      <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', fontFamily: 'sans-serif' }}>
+        <Bot size={80} color="#3b82f6" style={{ marginBottom: '20px' }} />
+        <h1 style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '10px' }}>Asan AI 🚀</h1>
+        <p style={{ color: '#9ca3af', marginBottom: '30px' }}>آپ کا اپنا جدید ترین آرٹیفیشل انٹیلیجنس معاون</p>
+        <button 
+          onClick={() => signIn('google')} 
+          style={{ backgroundColor: 'white', color: 'black', padding: '15px 40px', borderRadius: '50px', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }}
+        >
+          Google کے ساتھ شروع کریں
         </button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0a] text-white">
-      <header className="p-4 border-b border-gray-800 flex justify-between items-center bg-black/50 backdrop-blur-md">
-        <div className="flex items-center gap-2 font-bold text-xl text-blue-400">
-          <Sparkles size={24} /> Asan AI
-        </div>
-        <button onClick={() => signOut()} className="text-gray-400 hover:text-white"><LogOut /></button>
-      </header>
-
-      <main className="flex-1 overflow-y-auto p-4 space-y-4">
-        {chat.length === 0 && (
-          <div className="h-full flex items-center justify-center">
-            <h2 className="text-4xl font-bold opacity-20">How can I help you today?</h2>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#050505', color: 'white', fontFamily: 'sans-serif' }}>
+      {/* Main Chat */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        
+        {/* Header */}
+        <header style={{ padding: '20px', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '1.5rem', color: '#3b82f6' }}>
+            <Sparkles /> Asan AI
           </div>
-        )}
-        {chat.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-4 rounded-2xl ${msg.role === 'user' ? 'bg-blue-600' : 'bg-gray-800 border border-gray-700'}`}>
-              {msg.content}
+          <button onClick={() => signOut()} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <LogOut size={20} /> سائن آؤٹ
+          </button>
+        </header>
+
+        {/* Chat Area */}
+        <main style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: '120px' }}>
+          {chat.length === 0 && (
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1, fontSize: '4rem', fontWeight: 'bold', textAlign: 'center' }}>
+              میں آپ کی کیا مدد کر سکتا ہوں؟
             </div>
-          </div>
-        ))}
-      </main>
+          )}
+          {chat.map((msg, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', marginBottom: '20px' }}>
+              <div style={{ maxWidth: '80%', padding: '15px', borderRadius: '20px', backgroundColor: msg.role === 'user' ? '#2563eb' : '#1a1a1a', border: msg.role === 'user' ? 'none' : '1px solid #333' }}>
+                {msg.content}
+              </div>
+            </div>
+          ))}
+        </main>
 
-      <div className="p-4 bg-black border-t border-gray-800">
-        <form onSubmit={sendMessage} className="max-w-3xl mx-auto relative flex items-center gap-2 bg-[#1a1a1a] rounded-2xl p-2 border border-gray-700 focus-within:border-blue-500 transition-all">
-          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-gray-700 rounded-xl text-gray-400">
-            <Paperclip size={20} />
-          </button>
-          <button type="button" className="p-2 hover:bg-gray-700 rounded-xl text-gray-400">
-            <Mic size={20} />
-          </button>
-          <input 
-            value={input} 
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Message Asan AI..." 
-            className="flex-1 bg-transparent p-2 outline-none"
-          />
-          <button type="submit" className="p-2 bg-blue-600 rounded-xl hover:bg-blue-500 transition-all">
-            <Send size={20} />
-          </button>
-        </form>
+        {/* Fancy Input Bar */}
+        <div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '20px', background: 'linear-gradient(transparent, black)' }}>
+          <form onSubmit={sendMessage} style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#222', padding: '10px', borderRadius: '20px', border: '1px solid #444' }}>
+            
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" />
+            
+            <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: '10px' }}>
+              <Paperclip size={24} />
+            </button>
+
+            <button type="button" style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: '10px' }}>
+              <Mic size={24} />
+            </button>
+
+            <input 
+              value={input} 
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="اپنا پیغام یہاں لکھیں..." 
+              style={{ flex: 1, background: 'none', border: 'none', color: 'white', outline: 'none', fontSize: '1rem' }}
+            />
+
+            <button type="submit" style={{ backgroundColor: 'white', color: 'black', border: 'none', padding: '12px', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <Send size={20} />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
