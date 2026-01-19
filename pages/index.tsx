@@ -1,115 +1,127 @@
-import { useState, useEffect, useRef } from 'react';
-import { useSession, signIn, signOut } from "next-auth/react";
-import Link from 'next/link';
+import { useState, useRef } from 'react';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { Mic, Paperclip, Send, LogOut, Bot, User, Sparkles } from 'lucide-react';
 
 export default function Home() {
   const { data: session } = useSession();
-  const [prompt, setPrompt] = useState('');
-  const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [language, setLanguage] = useState('ur');
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
+  const [chat, setChat] = useState<{role: string, content: string}[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const userLang = typeof window !== 'undefined' ? navigator.language : 'ur';
-    setLanguage(userLang.startsWith('en') ? 'en' : 'ur');
-  }, []);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages]);
-
-  const sendMessage = async () => {
-    if (!prompt.trim()) return;
-    const newMsgs = [...messages, { role: 'user', text: prompt }];
-    setMessages(newMsgs);
-    setPrompt('');
-    setLoading(true);
+  const sendMessage = async (e: any) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    const newChat = [...chat, { role: 'user', content: input }];
+    setChat(newChat);
+    setInput('');
+    setIsTyping(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newChat }),
       });
-      const data = await response.json();
-      setMessages([...newMsgs, { role: 'ai', text: data.text || "AI جواب نہیں دے سکا۔" }]);
+      const data = await res.json();
+      setChat([...newChat, { role: 'assistant', content: data.content }]);
     } catch (error) {
-      setMessages([...newMsgs, { role: 'ai', text: "کنکشن کا مسئلہ ہے۔" }]);
+      console.error("Error:", error);
     } finally {
-      setLoading(false);
+      setIsTyping(false);
     }
   };
 
-  const uiText: any = {
-    ur: { new: "+ نئی چیٹ", upgrade: "پلان اپ گریڈ 💎", login: "گوگل سے لاگ ان", history: "حالیہ گفتگو", settings: "ترمیمات ⚙️", logout: "لاگ آؤٹ", place: "میسج لکھیں...", head: "میں آپ کی کیا مدد کر سکتا ہوں؟" },
-    en: { new: "+ New Chat", upgrade: "Upgrade Plan 💎", login: "Sign in with Google", history: "History", settings: "Settings ⚙️", logout: "Logout", place: "Message Asan AI...", head: "How can I help you today?" }
-  };
-  const t = uiText[language] || uiText.ur;
-
-  return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#212121', color: '#fff', direction: language === 'ur' ? 'rtl' : 'ltr', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      
-      {/* سائیڈ بار */}
-      <div style={{ width: isSidebarOpen ? '280px' : '0', transition: '0.3s', backgroundColor: '#171717', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderLeft: language === 'ur' ? '1px solid #333' : 'none' }}>
-        <div style={{ padding: '15px', flex: 1 }}>
-          <button style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #424242', background: 'transparent', color: '#fff', cursor: 'pointer', marginBottom: '20px' }}>{t.new}</button>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>{t.history}</div>
-          {messages.slice(0, 5).map((m, i) => (
-            <div key={i} style={{ padding: '8px', fontSize: '13px', color: '#ccc', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🗨️ {m.text.substring(0, 20)}...</div>
-          ))}
-        </div>
-        
-        <div style={{ padding: '15px', borderTop: '1px solid #333', backgroundColor: '#000' }}>
-          {!session ? (
-            <button onClick={() => signIn('google')} style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: '#fff', color: '#000', border: 'none', cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
-              {t.login}
-            </button>
-          ) : (
-            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <img src={session.user?.image || ''} style={{ width: '30px', borderRadius: '50%' }} />
-              <span style={{ fontSize: '14px' }}>{session.user?.name}</span>
-              <button onClick={() => signOut()} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '12px' }}>{t.logout}</button>
-            </div>
-          )}
-          <Link href="/pricing" style={{ textDecoration: 'none', color: '#fff' }}>
-            <div style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><span>💎</span> {t.upgrade}</div>
-          </Link>
-          <div style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#b4b4b4' }}><span>⚙️</span> {t.settings}</div>
+  if (!session) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 text-white p-6">
+        <div className="bg-white/10 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border border-white/20 text-center">
+          <Bot size={64} className="mx-auto mb-4 animate-bounce" />
+          <h1 className="text-4xl font-extrabold mb-2">Asan AI Builder</h1>
+          <p className="mb-8 text-blue-100">آپ کا اپنا جدید ترین آرٹیفیشل انٹیلیجنس معاون</p>
+          <button 
+            onClick={() => signIn('google')} 
+            className="w-full bg-white text-blue-600 font-bold py-4 rounded-xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2"
+          >
+            Google کے ساتھ شروع کریں
+          </button>
         </div>
       </div>
+    );
+  }
 
-      {/* مین ایریا */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-        <div style={{ padding: '15px', display: 'flex', alignItems: 'center', gap: '15px', borderBottom: '1px solid #2d2d30' }}>
-          <button onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '22px', cursor: 'pointer' }}>☰</button>
-          <span style={{ fontWeight: 'bold' }}>Asan AI 🚀</span>
+  return (
+    <div className="flex flex-col h-screen bg-[#f8fafc]">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b p-4 flex justify-between items-center px-6">
+        <div className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-black text-2xl">
+          <Sparkles className="text-blue-600" /> Asan AI
         </div>
+        <button onClick={() => signOut()} className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors font-medium">
+          <LogOut size={20} /> سائن آؤٹ
+        </button>
+      </header>
 
-        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingBottom: '120px' }}>
-          {messages.length === 0 ? (
-            <div style={{ textAlign: 'center', marginTop: '25vh' }}>
-              <h2 style={{ fontSize: '2.4rem', fontWeight: 'bold' }}>{t.head}</h2>
-            </div>
-          ) : (
-            messages.map((msg, i) => (
-              <div key={i} style={{ padding: '25px 15%', backgroundColor: msg.role === 'user' ? 'transparent' : '#2f2f2f', borderBottom: '1px solid #2d2d30' }}>
-                <div style={{ maxWidth: '800px', margin: 'auto', display: 'flex', gap: '25px' }}>
-                  <div style={{ fontSize: '24px' }}>{msg.role === 'user' ? '👤' : '🤖'}</div>
-                  <div style={{ lineHeight: '1.8', fontSize: '17px', color: '#ececec', whiteSpace: 'pre-wrap' }}>{msg.text}</div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 15%', background: 'linear-gradient(transparent, #212121 50%)' }}>
-          <div style={{ position: 'relative', maxWidth: '800px', margin: 'auto' }}>
-            <input value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendMessage()} placeholder={t.place} style={{ width: '100%', padding: '16px 20px', borderRadius: '15px', backgroundColor: '#2f2f2f', border: '1px solid #424242', color: '#fff', fontSize: '16px', outline: 'none' }} />
-            <button onClick={sendMessage} style={{ position: 'absolute', [language === 'ur' ? 'left' : 'right']: '12px', top: '50%', transform: 'translateY(-50%)', backgroundColor: loading ? '#555' : '#10a37f', color: '#fff', border: 'none', width: '35px', height: '35px', borderRadius: '8px', cursor: 'pointer' }}>↑</button>
+      {/* Chat Area */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        {chat.length === 0 && (
+          <div className="text-center py-20 text-gray-400">
+            <Bot size={48} className="mx-auto mb-4 opacity-20" />
+            <p>آج میں آپ کی کیا مدد کر سکتا ہوں؟</p>
           </div>
-        </div>
+        )}
+        {chat.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-blue-600' : 'bg-purple-600'}`}>
+                {msg.role === 'user' ? <User size={18} className="text-white" /> : <Bot size={18} className="text-white" />}
+              </div>
+              <div className={`p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border rounded-tl-none text-gray-800'}`}>
+                {msg.content}
+              </div>
+            </div>
+          </div>
+        ))}
+        {isTyping && <div className="text-sm text-gray-400 animate-pulse">Asan AI جواب لکھ رہا ہے...</div>}
+      </main>
+
+      {/* Fancy Input Bar */}
+      <div className="p-4 bg-white border-t">
+        <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-2 items-center bg-gray-100 p-2 rounded-2xl border focus-within:border-blue-400 transition-all">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*,.pdf" 
+            onChange={() => alert('فائل منتخب کر لی گئی ہے')}
+          />
+          <button 
+            type="button" 
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 text-gray-500 hover:bg-white hover:text-blue-600 rounded-xl transition-all shadow-sm"
+          >
+            <Paperclip size={22} />
+          </button>
+          <button 
+            type="button" 
+            className="p-3 text-gray-500 hover:bg-white hover:text-red-500 rounded-xl transition-all shadow-sm"
+          >
+            <Mic size={22} />
+          </button>
+          <input 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="اپنا سوال یہاں لکھیں..." 
+            className="flex-1 bg-transparent p-3 outline-none text-gray-700"
+          />
+          <button 
+            type="submit" 
+            className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all"
+          >
+            <Send size={22} />
+          </button>
+        </form>
       </div>
     </div>
   );
