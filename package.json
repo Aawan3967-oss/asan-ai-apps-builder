@@ -1,21 +1,28 @@
 {
-  "name": "universal-ai-builder",
-  "version": "1.0.0",
+  "name": "asan-ai-builder",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
     "next": "14.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "openai": "^4.24.1"
+    "react": "^18",
+    "react-dom": "^18",
+    "next-auth": "^4.24.5",
+    "openai": "^4.24.1",
+    "lucide-react": "^0.303.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "@types/node": "^20.10.5",
-    "@types/react": "^18.2.45",
-    "@types/react-dom": "^18.2.18"
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0"
   }
 }
