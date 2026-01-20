@@ -1,5 +1,5 @@
 {
-  "name": "asan-ai",
+  "name": "asan-ai-apps-builder",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,8 +10,6 @@
     "next": "14.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "next-auth": "^4.24.5",
-    "openai": "^4.30.0",
-    "lucide-react": "^0.344.0"
+    "openai": "4.30.0"
   }
 }
