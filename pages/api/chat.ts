@@ -1,23 +1,21 @@
-import { OpenAI } from 'openai';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
 
   try {
     const { messages } = req.body;
-    
-    // GPT-4o ماڈل استعمال کریں جو تصاویر اور فائلز کو سمجھ سکتا ہے
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // یا gpt-4o اگر آپ کے پاس بیلنس ہے
       messages: messages,
     });
-
-    res.status(200).json({ content: response.choices[0].message.content });
-  } catch (error) {
-    res.status(500).json({ error: "AI سے رابطہ کرنے میں مسئلہ ہوا۔" });
+    res.status(200).json({ content: completion.choices[0].message.content });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 }
