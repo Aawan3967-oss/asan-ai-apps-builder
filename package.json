@@ -1,12 +1,11 @@
 {
-  "name": "asan-ai-builder",
-  "version": "0.1.0",
+  "name": "asan-ai",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start"
   },
   "dependencies": {
     "next": "14.1.0",
@@ -14,13 +13,11 @@
     "react-dom": "18.2.0",
     "next-auth": "4.24.5",
     "lucide-react": "^0.303.0",
-    "openai": "^4.24.1",
-    "axios": "^1.6.7"
+    "openai": "^4.24.1"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
     "@types/react": "^18.2.48",
-    "@types/react-dom": "^18.2.18",
     "@types/node": "^20.11.10"
   }
 }
