@@ -11,11 +11,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { messages } = req.body;
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // یا gpt-4o اگر آپ کے پاس بیلنس ہے
+      model: "gpt-4o",
       messages: messages,
     });
     res.status(200).json({ content: completion.choices[0].message.content });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "AI سے رابطہ کرنے میں مسئلہ ہوا۔" });
   }
 }
