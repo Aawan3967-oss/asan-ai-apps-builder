@@ -1,0 +1,18 @@
+'use client'
+import { signIn } from 'next-auth/react'
+import Logo from '@/components/Logo'
+
+export default function Home() {
+  return (
+    <main className="h-screen flex flex-col items-center justify-center gap-6">
+      <Logo />
+      <h1 className="text-3xl font-bold">Asan AI</h1>
+      <button
+        onClick={() => signIn('google')}
+        className="px-6 py-3 bg-primary rounded-xl"
+      >
+        Google سے لاگ ان کریں
+      </button>
+    </main>
+  )
+}
